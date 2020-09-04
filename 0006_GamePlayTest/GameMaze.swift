@@ -127,15 +127,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 return false
         }
         
-        // Play BGM
-        if sequenceLabel == .Updating || sequenceLabel == .ReturnToUpdating {
-            if player.timer_playerWithPower.isCounting() {
-                sound.playBGM(.BgmPower)
-            } else {
-                sound.playBGM(.BgmNormal)
-            }
-        }
-        
         // Continue running sequence.
         return true
     }
@@ -218,6 +209,8 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             case .PlayerMiss:
                 goToNextSequence(.PlayerMissed)
         }
+        
+        playBGM()
     }
 
     func sequenceReturnToUpdating() {
@@ -233,6 +226,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         player.clear()
         player.draw(to: .None)
         ghosts.stop()
+        ghosts.draw()
         goToNextSequence(.PrepareFlashMaze, after: 1914)
     }
     
@@ -265,6 +259,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     
     func sequencePlayerMissed() {
         player.stop()
+        player.draw(to: .Stop)
         ghosts.stop()
         sound.stopBGM()
         goToNextSequence(.PlayerDisappeared, after: 990)
@@ -294,6 +289,13 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
 
+    func playBGM() {
+        if player.timer_playerWithPower.isCounting() {
+            sound.playBGM(.BgmPower)
+        } else {
+            sound.playBGM(.BgmNormal)
+        }
+    }
 
 
     
@@ -324,8 +326,8 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             context.updateSpecialTargetAppeared()
         }
         
-//        if  context.numberOfFeedsEated == context.numberOfFeeds {
-        if  context.numberOfFeedsEated == 5 {
+        if  context.numberOfFeedsEated == context.numberOfFeeds {
+//        if  context.numberOfFeedsEated == 5 {
             goToNextSequence(.RoundClear)
         }
 
@@ -412,6 +414,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     }
 
     private func getTileAttribute(column: Int, row: Int) -> EnMazeTile {
+        guard column < BG_WIDTH && row < BG_HEIGHT else { return .Wall }
         if column < 0 {
             return mazeAttributes[BG_WIDTH-1][row]
         } else if column >= BG_WIDTH {
@@ -619,7 +622,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             "     e1EF          EF1f     ",
             "     e1EF QhUWWVhR EF1f     ",
             "gggggD1CD f      e CD1Cggggg",
-            "___   1   f      e   1   ___" ,
+            "____  1   f      e   1  ____" ,
             "hhhhhB1AB f      e AB1Ahhhhh",
             "     e1EF SggggggT EF1f     ",
             "     e1EF          EF1f     ",

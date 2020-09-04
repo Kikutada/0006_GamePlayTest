@@ -280,6 +280,12 @@ class CgGhostManager {
         }
     }
 
+    func draw() {
+        for ghost in allGhosts {
+            ghost.draw()
+        }
+    }
+
     func clear() {
         for ghost in allGhosts {
             ghost.clear()
@@ -541,7 +547,6 @@ class CgGhost : CgActor {
     /// Stop
     override func stop() {
         super.stop()
-        draw()
     }
     
     /// Update handler

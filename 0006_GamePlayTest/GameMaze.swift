@@ -53,6 +53,7 @@ enum EnMazeTile: Int {
 
 /// Protocol  for actors
 protocol ActorDeligate {
+    func isSuspendUpdating() -> Bool
     func playerEatFeed(column: Int, row: Int, power: Bool)
     func playerEatFruit(column: Int, row: Int)
     func getPlayerSpeed(action: CgPlayer.EnPlayerAction, with power: Bool) -> Int
@@ -68,13 +69,21 @@ protocol ActorDeligate {
 /// This class has some methods to draw a maze and starting messages.
 class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
+    enum EnGameModelSequence: Int {
+        case Init = 0
+        case Start, Ready, Go, Updating, ReturnToUpdating, RoundClear, PrepareFlashMaze, FlashMaze,
+             PlayerMissed, PlayerDisappeared, PlayerRestart,
+             Missed, DisappearPlayer, Restart, GameOver
+    }
+
     var player: CgPlayer!
     var blinky: CgGhostBlinky!
     var pinky: CgGhostPinky!
     var inky: CgGhostInky!
     var clyde: CgGhostClyde!
-    var allGhosts: [CgGhost] = []
     var ptsManager: CgScorePtsManager!
+    var specialTarget: CgSpecialTarget!
+    var ghosts = CgGhostManager()
 
     convenience init(object: CgSceneFrame) {
         self.init(binding: object, context: object.context, sprite: object.sprite, background: object.background, sound: object.sound)
@@ -84,11 +93,12 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         inky   = CgGhostInky(binding: self, deligateActor: self)
         clyde  = CgGhostClyde(binding: self, deligateActor: self)
         ptsManager = CgScorePtsManager(binding: self, deligateActor: self)
+        specialTarget = CgSpecialTarget(binding: self, deligateActor: self)
         
-        allGhosts.append(blinky)
-        allGhosts.append(pinky)
-        allGhosts.append(inky)
-        allGhosts.append(clyde)
+        ghosts.append(blinky)
+        ghosts.append(pinky)
+        ghosts.append(inky)
+        ghosts.append(clyde)
     }
 
     /// Handle sequence
@@ -96,87 +106,29 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     /// - Parameter sequence: Sequence number
     /// - Returns: If true, continue the sequence, if not, end the sequence.
     override func handleSequence(sequence: Int) -> Bool {
-        switch sequence {
-            case  0:
-                drawBackground()
-                let _ = setAndDraw()
-                printPlayers()
+        guard let sequenceLabel: EnGameModelSequence = EnGameModelSequence(rawValue: sequence) else { return false }
 
-                player.reset()
-                for ghost in allGhosts { ghost.reset() }
-                ptsManager.reset()
-                
-                goToNextSequence()
-            
-            case 1:
-                printBlinking1Up()
-                drawPowerFeed(state: .Blinking)
+        switch sequenceLabel {
+            case .Init: sequenceInit()
+            case .Start: sequenceStart()
+            case .Ready: sequenceReady()
+            case .Go: sequenceGo()
+            case .Updating: sequenceUpdating()
+            case .ReturnToUpdating: sequenceReturnToUpdating()
+            case .RoundClear: sequenceRoundClear()
+            case .PrepareFlashMaze: sequencePrepareFlashMaze()
+            case .FlashMaze: sequenceFlashMaze()
+            case .PlayerMissed: sequencePlayerMissed()
+            case .PlayerDisappeared: seauencePlayerDisappeared()
+            case .PlayerRestart: sequencePlayerRestart()
 
-                player.start()
-                for ghost in allGhosts { ghost.start() }
-                
-                
-//                ptsManager.start(kind: .pts100, position: CgPosition(column: 10, row: 10), interval: 10000)
-                goToNextSequence()
-            
-            case  2:
-                // ===========
-                // Foever loop
-                // ===========
-                
-                // Player checks to collide ghost.
-                for ghost in allGhosts {
-                    if player.DetectCollision(ghostPosition: ghost.position) {
-                        if ghost.state.isFrightened()  {
-                            ghost.setStateToEscape()
-                        }
-                    }
-                }
-
-                // Set the chase state after after the time that the player doesn't eat feed.
-                if player.timer_playerNotToEat.isEventFired()  {
-                    blinky.chase(playerPosition: player.position)
-                    pinky.chase(playerPosition: player.position, playerDirection: player.direction.get())
-                    inky.chase(playerPosition: player.position, blinkyPosition: blinky.position)
-                    clyde.chase(playerPosition: player.position)
-
-                    for ghost in allGhosts { ghost.setStateToGoOut() }
-
-                } else {
-                    for ghost in allGhosts { ghost.setStateToScatter() }
-                }
-                
-                // For debug
-                for ghost in allGhosts { ghost.drawTargetPosition(show: true) }
-                break
-/*
-            //
-            //  Round clear animation(Maze flashes)
-            //
-            case  10:
-                blinkingTimer = 104  // 104*16ms = 1664ms
-                goToNextSequence()
-
-            case  11:
-                if blinkingTimer == 0 {
-                    goToNextSequence()
-                } else {
-                    let remain = blinkingTimer % 26
-                    if remain == 0 {
-                        drawMazeWall(color: .White)
-                    } else if remain == 13 { // 13*16ms = 208ms
-                        drawMazeWall(color: .Blue)
-                    }
-                    blinkingTimer -= 1
-                }
-*/
             default:
                 // Stop and exit running sequence.
                 return false
         }
         
         // Play BGM
-        if sequence >= 2 {
+        if sequenceLabel == .Updating || sequenceLabel == .ReturnToUpdating {
             if player.timer_playerWithPower.isCounting() {
                 sound.playBGM(.BgmPower)
             } else {
@@ -188,19 +140,195 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         return true
     }
 
+    func goToNextSequence(_ number: EnGameModelSequence, after time: Int = 0) {
+        goToNextSequence(number.rawValue, after: time)
+    }
+
+    func sequenceInit() {
+        drawBackground()
+        goToNextSequence()
+    }
+    
+    func sequenceStart() {
+        context.resetGame()
+        context.numberOfFeeds = drawMazeWithSettingValuesAndAttributes()
+        printBlinking1Up()
+        printPlayers(appearance: false)
+        printStateMessage(.PlayerOneReady)
+        sound.enableOutput(true)
+        sound.playSE(.Beginning)
+
+        goToNextSequence(.Ready, after: 2240)
+    }
+    
+    func sequenceReady() {
+        context.resetRound()
+        printStateMessage(.ClearPlayerOne)
+        printPlayers(appearance: true)
+        player.reset()
+        ghosts.reset()
+        specialTarget.reset()
+        ptsManager.reset()
+
+        goToNextSequence(.Go, after: 1880)
+    }
+    
+    func sequenceGo() {
+        printStateMessage(.ClearReady)
+        drawPowerFeed(state: .Blinking)
+        player.start()
+        ghosts.start()
+        goToNextSequence()
+    }
+    
+    func sequenceUpdating() {
+        // Player checks to collide ghost.
+        let collisionresult = ghosts.detectCollision(playerPosition: player.position)
+
+        switch collisionresult {
+            case .None:
+                // Set the chase state after after the time that the player doesn't eat feed.
+                if player.timer_playerNotToEat.isEventFired()  {
+                    blinky.chase(playerPosition: player.position)
+                    pinky.chase(playerPosition: player.position, playerDirection: player.direction.get())
+                    inky.chase(playerPosition: player.position, blinkyPosition: blinky.position)
+                    clyde.chase(playerPosition: player.position)
+
+                    ghosts.setStateToGoOut()
+
+                } else {
+                    ghosts.setStateToScatter()
+                }
+                
+                // For debug
+                ghosts.drawTargetPosition(show: true)
+
+            case .GhostEated:
+                let pts = context.ghostPts
+                ptsManager.start(kind: pts, position: ghosts.collisionPosition, interval: 62*16)  // 1000ms
+                context.ghostPts = pts.get2times()
+                addScore(pts: pts.getScore())
+                player.stop()
+                player.clear()
+                specialTarget.enabled = false
+                ghosts.stopWithoutEscaping()
+                sound.playSE(.EatGhost)
+                goToNextSequence(.ReturnToUpdating, after: 1000)
+
+            case .PlayerMiss:
+                goToNextSequence(.PlayerMissed)
+        }
+    }
+
+    func sequenceReturnToUpdating() {
+        player.start()
+        ghosts.startWithoutEscaping()
+        specialTarget.enabled = true
+        goToNextSequence(.Updating)
+    }
+    
+    func sequenceRoundClear() {
+        sound.stopBGM()
+        player.stop()
+        player.clear()
+        player.draw(to: .None)
+        ghosts.stop()
+        goToNextSequence(.PrepareFlashMaze, after: 1914)
+    }
+    
+    func sequencePrepareFlashMaze() {
+        ghosts.clear()
+        ghosts.drawTargetPosition(show: false)
+        specialTarget.stop()
+        ptsManager.stop()
+        blinkingTimer = 104  // 104*16ms = 1664ms
+        goToNextSequence()
+    }
+
+    func sequenceFlashMaze() {
+        if blinkingTimer > 0 {
+            let remain = blinkingTimer % 26
+            if remain == 0 {
+                drawMazeWall(color: .White)
+            } else if remain == 13 { // 13*16ms = 208ms
+                drawMazeWall(color: .Blue)
+            }
+            blinkingTimer -= 1
+        } else {
+            context.round += 1
+            context.numberOfFeeds = drawMazeWithSettingValuesAndAttributes()
+            printBlinking1Up()
+            printStateMessage(.Ready)
+            goToNextSequence(.Ready)
+        }
+    }
+    
+    func sequencePlayerMissed() {
+        player.stop()
+        ghosts.stop()
+        sound.stopBGM()
+        goToNextSequence(.PlayerDisappeared, after: 990)
+    }
+
+    func seauencePlayerDisappeared() {
+        player.drawPlayerDisappeared()
+        ghosts.clear()
+        ghosts.drawTargetPosition(show: false)
+        sound.playSE(.Miss)
+        goToNextSequence(.PlayerRestart, after: 2700)
+    }
+
+    func sequencePlayerRestart() {
+        specialTarget.stop()
+        ptsManager.stop()
+        context.numberOfPlayers  -= 1
+
+        if context.numberOfPlayers > 0 {
+            printStateMessage(.Ready)
+            drawPowerFeed(state: .Stop)
+            goToNextSequence(.Ready)
+        } else {
+            printStateMessage(.GameOver)
+            drawPowerFeed(state: .Clear)
+            goToNextSequence(.GameOver)
+        }
+    }
+
+
+
+    
+    func isSuspendUpdating() -> Bool {
+        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
+    }
+    
     func playerEatFeed(column: Int, row: Int, power: Bool) {
         background.put(0, column: column, row: row, texture: EnMazeTile.Road.getTexture())
         setTile(column: column,row: row, value: .Road)
 
         if power {
-            for ghost in allGhosts {
-                ghost.setStateToFrightened(time: getTimeOfPlayerWithPower())
-            }
+            context.resetGhostPts()
+            ghosts.setStateToFrightened(time: getTimeOfPlayerWithPower())
             addScore(pts: 50)
         } else {
             sound.playSE(.EatDot)
             addScore(pts: 10)
         }
+        
+        // Count eated feeds
+        context.numberOfFeedsEated += 1
+
+        // Judgment of appearance of special target
+        if context.numberOfFeedsEated == context.numberOfFeedsToAppearSpecialTarget {
+            specialTarget.setKind(to: context.kindOfSpecialTarget)
+            specialTarget.start()
+            context.updateSpecialTargetAppeared()
+        }
+        
+//        if  context.numberOfFeedsEated == context.numberOfFeeds {
+        if  context.numberOfFeedsEated == 5 {
+            goToNextSequence(.RoundClear)
+        }
+
     }
 
     func getTimeOfPlayerWithPower() -> Int {
@@ -214,6 +342,13 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     func playerEatFruit(column: Int, row: Int) {
         background.put(0, column: column, row: row, texture: EnMazeTile.Road.getTexture())
         setTile(column: column,row: row, value: .Road)
+
+        sound.playSE(.EatFruit)
+        specialTarget.stop()
+
+        let kind = specialTarget.getKind().getScorePts()
+        ptsManager.start(kind: kind, position: specialTarget.position, interval: 2000)  // 2000ms
+        addScore(pts: kind.getScore())
     }
     
     func getPlayerSpeed(action: CgPlayer.EnPlayerAction, with power: Bool) -> Int {
@@ -221,8 +356,8 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         switch action {
             case .Walking where !power : speed = 16
             case .Walking where  power : speed = 18
-            case .EatingDot where !power : speed = 15
-            case .EatingDot where  power : speed = 17
+            case .EatingFeed where !power : speed = 15
+            case .EatingFeed where  power : speed = 17
             case .EatingPower where !power : speed = 13
             case .EatingPower where  power : speed = 15
             case .EatingFruit where !power : speed = 15
@@ -308,30 +443,27 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         var row: Int
     }
 
-    private var numberOfDots: Int = 0
     private var mazeValues = [[EnMazeTile]](repeating: [EnMazeTile](repeating: .Road, count: BG_HEIGHT), count: BG_WIDTH)
     private var mazeAttributes = [[EnMazeTile]](repeating: [EnMazeTile](repeating: .Road, count: BG_HEIGHT), count: BG_WIDTH)
     private var powerFeeds = [StMazePosition]()
     private var blinkingTimer: Int = 0
 
-    func setAndDraw() -> Int {
-        resetSequence()
-        setMazeValuesAndAttributes()
+    func drawMazeWithSettingValuesAndAttributes() -> Int {
+        let numberOfFeeds = setMazeValuesAndAttributes()
         drawMaze()
         printFrame()
         printPlayerScore()
         printHighScore()
         printRounds()
 
-        return numberOfDots
+        return numberOfFeeds
     }
     
-    private func setMazeValuesAndAttributes() {
+    private func setMazeValuesAndAttributes() -> Int {
         
         let mazeSource = getMazeSource()
         var row = BG_HEIGHT-4
-
-        numberOfDots = 0
+        var numberOfFeeds = 0
         powerFeeds.removeAll()
 
         for str in mazeSource {
@@ -347,15 +479,15 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                     case "1" :
                         mazeValues[column][row] = EnMazeTile.Feed
                         mazeAttributes[column][row] = EnMazeTile.Road
-                        numberOfDots += 1
+                        numberOfFeeds += 1
                     case "2" :
                         mazeValues[column][row] = EnMazeTile.Feed
                         mazeAttributes[column][row] = EnMazeTile.Oneway
-                        numberOfDots += 1
+                        numberOfFeeds += 1
                     case "3" :
                         mazeValues[column][row] = EnMazeTile.PowerFeed
                         mazeAttributes[column][row] = EnMazeTile.Road
-                        numberOfDots += 1
+                        numberOfFeeds += 1
                         let pd = StMazePosition(column: column, row: row)
                         powerFeeds.append(pd)
                     default :
@@ -366,6 +498,8 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             }
             row -= 1
         }
+        
+        return numberOfFeeds
     }
 
     ///　Draw maze with walls and dots

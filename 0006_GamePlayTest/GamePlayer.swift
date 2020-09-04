@@ -13,7 +13,7 @@ import UIKit
 class CgPlayer : CgActor {
 
     enum EnPlayerAction {
-        case None, Stopping, Walking, Turning, EatingDot, EatingPower, EatingFruit
+        case None, Stopping, Walking, Turning, EatingFeed, EatingPower, EatingFruit
     }
 
     var targetDirecition: EnDirection = .Stop
@@ -75,13 +75,12 @@ class CgPlayer : CgActor {
     override func start() {
         super.start()
         timer_playerNotToEat.start()
+        draw(to: direction.get())
     }
 
     /// Stop
     override func stop() {
         super.stop()
-        direction.set(to: .Stop)
-        draw(to: .Stop)
     }
     
     /// Update handler
@@ -185,7 +184,7 @@ class CgPlayer : CgActor {
 
         switch tile {
             case .Feed:
-                speed = deligateActor.getPlayerSpeed(action: .EatingDot, with: power)
+                speed = deligateActor.getPlayerSpeed(action: .EatingFeed, with: power)
                 deligateActor.playerEatFeed(column: targetColumn, row: targetRow, power: false)
                 timer_playerNotToEat.restart()
 
@@ -226,17 +225,6 @@ class CgPlayer : CgActor {
             direction.update()
             draw(to: direction.get())
         }
-    }
-
-    /// Collision detection
-    /// - Parameter ghostPosition: Ghost's position
-    /// - Returns: If true, ghost and player have collided.
-    func DetectCollision(ghostPosition: CgPosition) -> Bool {
-        var collision: Bool = false
-        if (abs(ghostPosition.x-position.x) < 5) && (abs(ghostPosition.y-position.y) < 5) {
-            collision = true
-        }
-        return collision
     }
 
     /// Draw and animate  player in the direction

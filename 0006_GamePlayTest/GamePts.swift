@@ -47,6 +47,7 @@ class CgScorePts : CgActor {
 
         func get2times() -> EnScorePts {
             switch self {
+                case .pts100  : return .pts200
                 case .pts200  : return .pts400
                 case .pts400  : return .pts800
                 case .pts800  : return .pts1600

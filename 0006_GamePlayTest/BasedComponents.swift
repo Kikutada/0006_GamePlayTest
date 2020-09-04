@@ -265,6 +265,12 @@ class CbScene : CbContainer {
         return current_sequence
     }
 
+    /// Get next sequence number
+    /// - Returns: Sequence number(from 0  to n)
+    func getNextSequence() -> Int {
+        return next_sequence
+    }
+
     /// Go to specified sequence number
     /// - Parameter number: Sequence number(from 0  to n)
     func goToSequence(number: Int) {

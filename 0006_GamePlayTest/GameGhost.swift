@@ -247,9 +247,109 @@ class CgGhostClyde : CgGhost {
     ///  Target position isn't shown while Cyde is moving randomly.
     /// - Parameter show: True is to draw.
     override func drawTargetPosition(show: Bool) {
-        let _show = state.get() == .Chase ? chaseMode : show
+        let _show = state.get() == .Chase ? chaseMode && show : show
         super.drawTargetPosition(show: _show)
     }
+}
+
+/// Ghost Manager class
+class CgGhostManager {
+    
+    private var allGhosts: [CgGhost] = []
+    var collisionPosition = CgPosition()
+    
+    func append(_ ghost: CgGhost) {
+        allGhosts.append(ghost)
+    }
+
+    func reset() {
+        for ghost in allGhosts {
+            ghost.reset()
+        }
+    }
+
+    func start() {
+        for ghost in allGhosts {
+            ghost.start()
+        }
+    }
+
+    func stop() {
+        for ghost in allGhosts {
+            ghost.stop()
+        }
+    }
+
+    func clear() {
+        for ghost in allGhosts {
+            ghost.clear()
+        }
+    }
+
+    func setStateToFrightened(time: Int) {
+        for ghost in allGhosts {
+            ghost.setStateToFrightened(time: time)
+        }
+    }
+
+    func setStateToScatter() {
+        for ghost in allGhosts {
+            ghost.setStateToScatter()
+        }
+    }
+
+    func setStateToGoOut() {
+        for ghost in allGhosts {
+            ghost.setStateToGoOut()
+        }
+    }
+
+    enum EnCollisionResult {
+        case None, GhostEated, PlayerMiss
+    }
+    
+    func detectCollision(playerPosition: CgPosition) -> EnCollisionResult {
+        var collisionResult: EnCollisionResult = .None
+
+        for ghost in allGhosts {
+            if (abs(ghost.position.x-playerPosition.x) <= 4) && (abs(ghost.position.y-playerPosition.y) <= 4) {
+                if ghost.state.isFrightened()  {
+                    ghost.setStateToEscape()                    
+                    ghost.clear()
+                    collisionPosition = ghost.position
+                    collisionResult = .GhostEated
+                } else {
+                    collisionResult = .PlayerMiss
+                }
+                break
+            }
+        }
+
+        return collisionResult
+    }
+
+    func drawTargetPosition(show: Bool) {
+        for ghost in allGhosts {
+            ghost.drawTargetPosition(show: show)
+        }
+    }
+    
+    func startWithoutEscaping() {
+        for ghost in allGhosts {
+            if !ghost.state.isEscape() {
+                ghost.start()
+            }
+        }
+    }
+
+    func stopWithoutEscaping() {
+        for ghost in allGhosts {
+            if !ghost.state.isEscape() {
+                ghost.stop()
+            }
+        }
+    }
+
 }
 
 //=================================================================
@@ -372,16 +472,6 @@ class CgGhostState : CbContainer {
         return timer_frightenedState.isEventFired()
     }
 
-    func pauseFrightened(_ on: Bool) {
-        if on {
-            timer_frightenedState.pause()
-            timer_frightenedStateWhileBlinking.pause()
-        } else {
-            timer_frightenedState.start()
-            timer_frightenedStateWhileBlinking.start()
-        }
-    }
-
     func isFrightenedBlinkingState() -> Bool {
         return frightenedBlinkingState
     }
@@ -457,7 +547,7 @@ class CgGhost : CgActor {
     /// Update handler
     /// - Parameter interval: Interval time(ms) to update
     override func update(interval: Int) {
-
+        
         //
         // Entry Action to state
         //
@@ -472,6 +562,12 @@ class CgGhost : CgActor {
                 case .EscapeInNest: entryActionToEscapeInNest()
             }
             state.update()
+        }
+
+        //　REMARKS: When Ghost returns to the nest, it will stop while Pacman eats the ghost.
+        if state.getNext() == .Standby && deligateActor.isSuspendUpdating() {
+            self.enabled = false
+            return
         }
 
         //
@@ -731,7 +827,7 @@ class CgGhost : CgActor {
             
             if (road == .Wall) {
                 can = false
-            } else if oneWayProhibition && (road == .Oneway && direction == .Up) {
+            } else if oneWayProhibition && (road == .Oneway && direction == .Up && position.isCenter()) {
                 can = false
             }
         } else {
@@ -786,7 +882,7 @@ class CgGhost : CgActor {
         var _speed = speed
         var nextDirection = direction.get()
 
-        // REMARK:
+        // REMARKS:
         //   After the ghost changes direction,
         //   move one dot or more and then change the next direction.
         //   Without this code, ghost will quickly change directions.
@@ -798,6 +894,7 @@ class CgGhost : CgActor {
             }
             direction.set(to: nextDirection)
             if direction.isChanging() {
+                position.roundDown(to: .Stop)
                 position.amountMoved = 0
             }
         }
@@ -882,9 +979,11 @@ class CgGhost : CgActor {
     func draw() {
         if enabled == false {
             // Stopped ghost
-            let texture1 = actor.rawValue*16+direction.get().rawValue*2+64
-            sprite.draw(sprite_number, x: position.x, y: position.y, texture: texture1)
             sprite.stopAnimation(sprite_number)
+            if !state.isFrightened() {
+                let texture1 = actor.rawValue*16+direction.get().rawValue*2+64
+                sprite.draw(sprite_number, x: position.x, y: position.y, texture: texture1)
+            }
 
         } else if state.isFrightened() {
             // Frightened ghost

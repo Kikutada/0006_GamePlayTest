@@ -179,7 +179,7 @@ class CgScorePtsManager: CbContainer {
             actor = actors.remove(at: 0)
         }
         actor.set(to: kind, interval: time)
-        actor.position = position
+        actor.position.set(position)
         actor.start()
 
         doings.append(actor)

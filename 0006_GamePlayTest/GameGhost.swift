@@ -310,6 +310,28 @@ class CgGhostManager {
         }
     }
 
+    func isFrightenedState() -> Bool {
+        var frightenedState: Bool = false
+        for ghost in allGhosts {
+            if ghost.state.isFrightened() {
+                frightenedState = true
+                break
+            }
+        }
+        return frightenedState
+    }
+
+    func isEscapeState() -> Bool {
+        var escapeState: Bool = false
+        for ghost in allGhosts {
+            if ghost.state.get() == .Escape {
+                escapeState = true
+                break
+            }
+        }
+        return escapeState
+    }
+    
     enum EnCollisionResult {
         case None, GhostEated, PlayerMiss
     }

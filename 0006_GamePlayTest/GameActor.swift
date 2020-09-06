@@ -173,6 +173,10 @@ class CgPosition {
         self.amountMoved = 0
     }
 
+    func set(_ position: CgPosition) {
+        self.set(column: position.column, row: position.row, dx: position.dx, dy: position.dy)
+    }
+
     func canMove(to direction: EnDirection)->Bool {
         return ( (direction == .Left || direction == .Right) && (dy == 0) ||
                  (direction ==   .Up || direction ==  .Down) && (dx == 0) )

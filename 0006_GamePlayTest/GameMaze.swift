@@ -142,25 +142,23 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     
     func sequenceStart() {
         context.resetGame()
+        context.resetRound()
         context.numberOfFeeds = drawMazeWithSettingValuesAndAttributes()
         printBlinking1Up()
         printPlayers(appearance: false)
         printStateMessage(.PlayerOneReady)
         sound.enableOutput(true)
         sound.playSE(.Beginning)
-
         goToNextSequence(.Ready, after: 2240)
     }
     
     func sequenceReady() {
-        context.resetRound()
         printStateMessage(.ClearPlayerOne)
         printPlayers(appearance: true)
         player.reset()
         ghosts.reset()
         specialTarget.reset()
         ptsManager.reset()
-
         goToNextSequence(.Go, after: 1880)
     }
     
@@ -184,7 +182,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                     pinky.chase(playerPosition: player.position, playerDirection: player.direction.get())
                     inky.chase(playerPosition: player.position, blinkyPosition: blinky.position)
                     clyde.chase(playerPosition: player.position)
-
                     ghosts.setStateToGoOut()
 
                 } else {
@@ -250,6 +247,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             blinkingTimer -= 1
         } else {
             context.round += 1
+            context.resetRound()
             context.numberOfFeeds = drawMazeWithSettingValuesAndAttributes()
             printBlinking1Up()
             printStateMessage(.Ready)
@@ -276,7 +274,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     func sequencePlayerRestart() {
         specialTarget.stop()
         ptsManager.stop()
-        context.numberOfPlayers  -= 1
+        context.numberOfPlayers -= 1
 
         if context.numberOfPlayers > 0 {
             printStateMessage(.Ready)
@@ -290,10 +288,23 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     }
 
     func playBGM() {
-        if player.timer_playerWithPower.isCounting() {
+        if ghosts.isEscapeState() {
+            sound.playBGM(.BgmReturn)
+        } else if ghosts.isFrightenedState() {
             sound.playBGM(.BgmPower)
         } else {
-            sound.playBGM(.BgmNormal)
+            let numberOfRemainingFeeds = context.numberOfFeeds - context.numberOfFeedsEated
+            if numberOfRemainingFeeds <= 16 {
+                sound.playBGM(.BgmSpurt4)
+            } else if numberOfRemainingFeeds <= 32 {
+                sound.playBGM(.BgmSpurt3)
+            } else if numberOfRemainingFeeds <= 64 {
+                sound.playBGM(.BgmSpurt2)
+            } else if numberOfRemainingFeeds <= 128 {
+                sound.playBGM(.BgmSpurt1)
+            } else {
+                sound.playBGM(.BgmNormal)
+            }
         }
     }
 
@@ -414,7 +425,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     }
 
     private func getTileAttribute(column: Int, row: Int) -> EnMazeTile {
-        guard column < BG_WIDTH && row < BG_HEIGHT else { return .Wall }
         if column < 0 {
             return mazeAttributes[BG_WIDTH-1][row]
         } else if column >= BG_WIDTH {

@@ -19,7 +19,7 @@ class CgContext {
 
     var highScore = 100
     var score = 0
-    var numberOfPlayers = 3
+    var numberOfPlayers = 0
     var round = 1
     var credit = 1
 
@@ -36,14 +36,14 @@ class CgContext {
 
     func resetGame() {
         score = 0
-        numberOfPlayers = 3
+        numberOfPlayers = 6
         round = 1
         score_extendPlayer = (language == .English) ? 20000 : 10000
         score_extendedPlayer = false
     }
         
     func resetRound() {
-        numberOfFeeds = 0
+//        numberOfFeeds = 0
         numberOfFeedsEatedByMiss = 0
         numberOfFeedsEated = 0
         numberOfFeedsToAppearSpecialTarget = 70

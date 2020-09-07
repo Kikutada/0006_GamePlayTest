@@ -1,6 +1,6 @@
 //
 //  GameSpTarget.swift
-//  GameDev1
+//  0006_GamePlayTest
 //
 //  Created by Kikutada on 2020/09/03.
 //  Copyright © 2020 Kikutada All rights reserved.
@@ -49,21 +49,6 @@ class CgSpecialTarget : CgActor {
                 case .None:       return 16*3+10
             }
         }
-/*
-        func getBgTextures() -> [Int] {
-            switch self {
-                case .Cherry:     return [128,129,144,145]
-                case .Strawberry: return [130,131,146,147]
-                case .Orange:     return [132,133,148,149]
-                case .Apple:      return [134,135,150,151]
-                case .Melon:      return [136,137,152,153]
-                case .Galaxian:   return [138,139,154,155]
-                case .Bell:       return [140,141,156,157]
-                case .Key:        return [142,143,158,159]
-                case .None:       return [114,115,130,131]
-            }
-        }
-*/
     }
 
     private var kindOfSpecialTarget: EnSpecialTarget = .None

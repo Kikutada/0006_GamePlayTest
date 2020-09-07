@@ -2,14 +2,13 @@
 //  GamePts.swift
 //  0006_GamePlayTest
 //
-//
 //  Created by Kikutada on 2020/09/03.
 //  Copyright © 2020 Kikutada All rights reserved.
 //
 
 import Foundation
 
-/// Points for score  class derived from CgActor
+/// Points for score class derived from CgActor
 class CgScorePts : CgActor {
 
     enum EnScorePts: Int {

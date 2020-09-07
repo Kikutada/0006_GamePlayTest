@@ -694,7 +694,7 @@ class CgGhost : CgActor {
     }
 
     // ============================================================
-    //  Do action in state.
+    //  Do activities in state.
     // ============================================================
     /// Ghost moves up and down in the nest.
     func doActionInStandby() {

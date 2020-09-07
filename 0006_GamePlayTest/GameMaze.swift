@@ -130,10 +130,9 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         return true
     }
 
-    func goToNextSequence(_ number: EnGameModelSequence, after time: Int = 0) {
-        goToNextSequence(number.rawValue, after: time)
-    }
-
+    // ============================================================
+    //  Do activities in state.
+    // ============================================================
     func sequenceInit() {
         drawBackground()
         goToNextSequence()
@@ -208,7 +207,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 specialTarget.enabled = false
                 ghosts.stopWithoutEscaping()
                 sound.playSE(.EatGhost)
-                sound.stopBGM()  // To change playBGM(.BgmEscaping) immediately.
+                sound.stopBGM()  // REMARKS: To change playBGM(.BgmEscaping) immediately.
                 goToNextSequence(.ReturnToUpdating, after: 1000)
 
             case .PlayerMiss:
@@ -295,36 +294,10 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
 
-    func playBGM() {
-        if ghosts.isEscapeState() {
-            sound.playBGM(.BgmEscaping)
-        } else if ghosts.isFrightenedState() {
-            sound.playBGM(.BgmPower)
-        } else {
-            let numberOfRemainingFeeds = context.numberOfFeeds - context.numberOfFeedsEated
-            if numberOfRemainingFeeds <= 16 {
-                sound.playBGM(.BgmSpurt4)
-            } else if numberOfRemainingFeeds <= 32 {
-                sound.playBGM(.BgmSpurt3)
-            } else if numberOfRemainingFeeds <= 64 {
-                sound.playBGM(.BgmSpurt2)
-            } else if numberOfRemainingFeeds <= 128 {
-                sound.playBGM(.BgmSpurt1)
-            } else {
-                sound.playBGM(.BgmNormal)
-            }
-        }
-    }
+    // ============================================================
+    //  Implement for protocol to ActorDeligate
+    // ============================================================
 
-    func isGhostSpurt() -> Bool {
-        let feedsRemain: Int = context.numberOfFeeds - context.numberOfFeedsEated
-        return (feedsRemain <= context.numberOfFeedsRemaingToSpurt) && !ghosts.isGhostInNest()
-    }
-
-    func isSuspendUpdating() -> Bool {
-        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
-    }
-    
     func playerEatFeed(column: Int, row: Int, power: Bool) {
         background.put(0, column: column, row: row, texture: EnMazeTile.Road.getTexture())
         setTile(column: column,row: row, value: .Road)
@@ -443,6 +416,44 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         return mazeAttributes[column][row]
     }
 
+    // ============================================================
+    //  General methods in this class
+    // ============================================================
+
+    func goToNextSequence(_ number: EnGameModelSequence, after time: Int = 0) {
+        goToNextSequence(number.rawValue, after: time)
+    }
+
+    func playBGM() {
+        if ghosts.isEscapeState() {
+            sound.playBGM(.BgmEscaping)
+        } else if ghosts.isFrightenedState() {
+            sound.playBGM(.BgmPower)
+        } else {
+            let numberOfRemainingFeeds = context.numberOfFeeds - context.numberOfFeedsEated
+            if numberOfRemainingFeeds <= 16 {
+                sound.playBGM(.BgmSpurt4)
+            } else if numberOfRemainingFeeds <= 32 {
+                sound.playBGM(.BgmSpurt3)
+            } else if numberOfRemainingFeeds <= 64 {
+                sound.playBGM(.BgmSpurt2)
+            } else if numberOfRemainingFeeds <= 128 {
+                sound.playBGM(.BgmSpurt1)
+            } else {
+                sound.playBGM(.BgmNormal)
+            }
+        }
+    }
+
+    func isGhostSpurt() -> Bool {
+        let feedsRemain: Int = context.numberOfFeeds - context.numberOfFeedsEated
+        return (feedsRemain <= context.numberOfFeedsRemaingToSpurt) && !ghosts.isGhostInNest()
+    }
+
+    func isSuspendUpdating() -> Bool {
+        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
+    }
+    
 
     func addScore(pts: Int) {
         context.score += pts

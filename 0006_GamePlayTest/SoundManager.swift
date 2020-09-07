@@ -26,7 +26,7 @@ class CgSoundManager: CbContainer {
         case BgmSpurt3
         case BgmSpurt4
         case BgmPower
-        case BgmReturn
+        case BgmEscaping
         case Beginning
         case Intermission
     }

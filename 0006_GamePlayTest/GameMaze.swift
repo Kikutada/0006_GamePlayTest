@@ -72,8 +72,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     enum EnGameModelSequence: Int {
         case Init = 0
         case Start, Ready, Go, Updating, ReturnToUpdating, RoundClear, PrepareFlashMaze, FlashMaze,
-             PlayerMissed, PlayerDisappeared, PlayerRestart,
-             Missed, DisappearPlayer, Restart, GameOver
+             PlayerMissed, PlayerDisappeared, PlayerRestart, GameOver
     }
 
     var player: CgPlayer!
@@ -188,6 +187,14 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                     ghosts.setStateToScatter()
                 }
                 
+                // If Blinky becomes spurt or not.
+                if isGhostSpurt() {
+                    blinky.state.setSpurt(true)
+                    blinky.chase(playerPosition: player.position)
+                } else {
+                    blinky.state.setSpurt(false)
+                }
+
                 // For debug
                 ghosts.drawTargetPosition(show: true)
 
@@ -201,6 +208,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 specialTarget.enabled = false
                 ghosts.stopWithoutEscaping()
                 sound.playSE(.EatGhost)
+                sound.stopBGM()  // To change playBGM(.BgmEscaping) immediately.
                 goToNextSequence(.ReturnToUpdating, after: 1000)
 
             case .PlayerMiss:
@@ -289,7 +297,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
     func playBGM() {
         if ghosts.isEscapeState() {
-            sound.playBGM(.BgmReturn)
+            sound.playBGM(.BgmEscaping)
         } else if ghosts.isFrightenedState() {
             sound.playBGM(.BgmPower)
         } else {
@@ -308,8 +316,11 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
 
+    func isGhostSpurt() -> Bool {
+        let feedsRemain: Int = context.numberOfFeeds - context.numberOfFeedsEated
+        return (feedsRemain <= context.numberOfFeedsRemaingToSpurt) && !ghosts.isGhostInNest()
+    }
 
-    
     func isSuspendUpdating() -> Bool {
         return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
     }
@@ -338,7 +349,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
         
         if  context.numberOfFeedsEated == context.numberOfFeeds {
-//        if  context.numberOfFeedsEated == 5 {
             goToNextSequence(.RoundClear)
         }
 

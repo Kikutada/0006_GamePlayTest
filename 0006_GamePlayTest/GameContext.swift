@@ -29,6 +29,7 @@ class CgContext {
     var numberOfFeeds: Int = 0
     var numberOfFeedsEatedByMiss: Int = 0
     var numberOfFeedsEated: Int = 0
+    var numberOfFeedsRemaingToSpurt: Int = 0
     var numberOfFeedsToAppearSpecialTarget: Int = 0
     var kindOfSpecialTarget: CgSpecialTarget.EnSpecialTarget = .None
     
@@ -43,12 +44,18 @@ class CgContext {
     }
         
     func resetRound() {
-//        numberOfFeeds = 0
         numberOfFeedsEatedByMiss = 0
         numberOfFeedsEated = 0
         numberOfFeedsToAppearSpecialTarget = 70
-        kindOfSpecialTarget = .Cherry
+        numberOfFeedsRemaingToSpurt = 20
+        resetSpecialTarget()
         resetGhostPts()
+    }
+
+    func resetSpecialTarget() {
+        let roundTable: [CgSpecialTarget.EnSpecialTarget] = [.Cherry, .Strawberry, .Orange, .Orange, .Apple, .Apple, .Melon, .Melon, .Galaxian, .Galaxian, .Key]
+        let kind = round >= roundTable.count ? roundTable.count-1 : round-1
+        kindOfSpecialTarget = roundTable[kind]
     }
     
     func resetGhostPts() {

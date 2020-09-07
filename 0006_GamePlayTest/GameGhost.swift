@@ -324,7 +324,7 @@ class CgGhostManager {
     func isEscapeState() -> Bool {
         var escapeState: Bool = false
         for ghost in allGhosts {
-            if ghost.state.get() == .Escape {
+            if ghost.state.get() == .Escape || ghost.state.getNext() == .Escape {
                 escapeState = true
                 break
             }
@@ -356,12 +356,6 @@ class CgGhostManager {
         return collisionResult
     }
 
-    func drawTargetPosition(show: Bool) {
-        for ghost in allGhosts {
-            ghost.drawTargetPosition(show: show)
-        }
-    }
-    
     func startWithoutEscaping() {
         for ghost in allGhosts {
             if !ghost.state.isEscape() {
@@ -378,6 +372,23 @@ class CgGhostManager {
         }
     }
 
+    func isGhostInNest() -> Bool {
+        var monstersInNest: Bool = false
+        for ghost in allGhosts {
+            if ghost.state.get() == .Standby {
+                monstersInNest = true
+                break
+            }
+        }
+        return monstersInNest
+    }
+
+    func drawTargetPosition(show: Bool) {
+        for ghost in allGhosts {
+            ghost.drawTargetPosition(show: show)
+        }
+    }
+    
 }
 
 //=================================================================
@@ -475,9 +486,11 @@ class CgGhostState : CbContainer {
         return currentState != nextState
     }
     
-    func setSpurt() {
-        spurtState = true
-        updateDrawing = true
+    func setSpurt(_ spurt: Bool) {
+        if spurt != spurtState {
+            spurtState = spurt
+            updateDrawing = true
+        }
     }
     
     func isSpurt() -> Bool {
@@ -773,7 +786,7 @@ class CgGhost : CgActor {
     
     func doActionInFrightened() {
         let speed = getGhostSpeed(action: .Frightened)
-        move(targetSelected: false, speed: speed, oneWayProhibition: true)
+        move(targetSelected: false, speed: speed, oneWayProhibition: false)
     }
 
     // ============================================================
@@ -1031,7 +1044,8 @@ class CgGhost : CgActor {
 
         } else {
             // Walking ghost
-            let texture1 = actor.rawValue*16+direction.get().rawValue*2+64
+            let spurt = state.isSpurt() ? 16*9 : 0  // For debug
+            let texture1 = actor.rawValue*16+direction.get().rawValue*2+64+spurt
             let texture2 = texture1 + 1
             sprite.startAnimation(sprite_number, sequence: [texture1,texture2], timePerFrame: 0.12, repeat: true)
         }

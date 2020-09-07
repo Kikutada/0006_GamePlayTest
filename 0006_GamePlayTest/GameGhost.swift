@@ -346,7 +346,7 @@ class CgGhostManager {
                     ghost.clear()
                     collisionPosition = ghost.position
                     collisionResult = .GhostEated
-                } else {
+                } else if !ghost.state.isEscaping()  {
                     collisionResult = .PlayerMiss
                 }
                 break
@@ -358,7 +358,7 @@ class CgGhostManager {
 
     func startWithoutEscaping() {
         for ghost in allGhosts {
-            if !ghost.state.isEscape() {
+            if !ghost.state.isEscaping() {
                 ghost.start()
             }
         }
@@ -366,7 +366,7 @@ class CgGhostManager {
 
     func stopWithoutEscaping() {
         for ghost in allGhosts {
-            if !ghost.state.isEscape() {
+            if !ghost.state.isEscaping() {
                 ghost.stop()
             }
         }
@@ -522,10 +522,10 @@ class CgGhostState : CbContainer {
     }
 
     func isFrightened() -> Bool {
-        return frightenedState && !isEscape()
+        return frightenedState && !isEscaping()
     }
 
-    func isEscape() -> Bool {
+    func isEscaping() -> Bool {
         return currentState == .Escape || nextState == .Escape || currentState == .EscapeInNest || nextState == .EscapeInNest
     }
 
@@ -815,7 +815,7 @@ class CgGhost : CgActor {
     
     // While ghost is escaping to the nest, it doesn't change if eating more power food.
     func setStateToFrightened(time: Int) {
-        guard !state.isEscape() else { return }
+        guard !state.isEscaping() else { return }
         state.setFrightened(true, interval: time)
         updateDirection(to: direction.get().getReverse())
     }
@@ -1037,7 +1037,7 @@ class CgGhost : CgActor {
                 }
             }
 
-        } else if state.isEscape() {
+        } else if state.isEscaping() {
             // Escaping ghost
             let texture1 = direction.get().rawValue+88
             sprite.draw(sprite_number, x: position.x, y: position.y, texture: texture1)

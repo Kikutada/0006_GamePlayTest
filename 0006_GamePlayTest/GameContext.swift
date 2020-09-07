@@ -37,7 +37,7 @@ class CgContext {
 
     func resetGame() {
         score = 0
-        numberOfPlayers = 6
+        numberOfPlayers = 3
         round = 1
         score_extendPlayer = (language == .English) ? 20000 : 10000
         score_extendedPlayer = false

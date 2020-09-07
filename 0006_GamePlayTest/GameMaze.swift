@@ -298,6 +298,10 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     //  Implement for protocol to ActorDeligate
     // ============================================================
 
+    func isSuspendUpdating() -> Bool {
+        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
+    }
+    
     func playerEatFeed(column: Int, row: Int, power: Bool) {
         background.put(0, column: column, row: row, texture: EnMazeTile.Road.getTexture())
         setTile(column: column,row: row, value: .Road)
@@ -327,14 +331,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
     }
 
-    func getTimeOfPlayerWithPower() -> Int {
-        return 6000 //ms
-    }
-    
-    func getTimeOfPlayerNotToEat() -> Int {
-        return 7000 // ms
-    }
-    
     func playerEatFruit(column: Int, row: Int) {
         background.put(0, column: column, row: row, texture: EnMazeTile.Road.getTexture())
         setTile(column: column,row: row, value: .Road)
@@ -363,6 +359,14 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         return speed
     }
 
+    func getTimeOfPlayerWithPower() -> Int {
+        return 6000 //ms
+    }
+    
+    func getTimeOfPlayerNotToEat() -> Int {
+        return 7000 // ms
+    }
+    
     func getGhostSpeed(action: CgGhost.EnGhostAction) -> Int {
         let speed: Int
         switch action {
@@ -450,11 +454,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         return (feedsRemain <= context.numberOfFeedsRemaingToSpurt) && !ghosts.isGhostInNest()
     }
 
-    func isSuspendUpdating() -> Bool {
-        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
-    }
-    
-
     func addScore(pts: Int) {
         context.score += pts
         printPlayerScore()
@@ -494,7 +493,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     }
     
     private func setMazeValuesAndAttributes() -> Int {
-        
         let mazeSource = getMazeSource()
         var row = BG_HEIGHT-4
         var numberOfFeeds = 0

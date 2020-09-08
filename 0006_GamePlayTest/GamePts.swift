@@ -127,13 +127,11 @@ class CgScorePts : CgActor {
     //  General methods in this class
     // ============================================================
 
-    func set(to spriteNumber: Int) {
-        sprite_number = spriteNumber
-    }
-    
-    func set(to kind: EnScorePts, interval time: Int) {
+    func start(kind: EnScorePts, position at: CgPosition, interval time: Int) {
         ptsNumber = kind
         timer_disappearPts.set(interval: time)
+        self.position.set(at)
+        start()
     }
     
 }
@@ -151,7 +149,7 @@ class CgScorePtsManager: CbContainer {
         super.init(binding: object)
         for i in 0 ..< numberOfActors {
             let actor: CgScorePts = CgScorePts(binding: object, deligateActor: deligateActor)
-            actor.set(to: firstSpriteNumber + i*2)
+            actor.sprite_number = firstSpriteNumber+i*2
             actors.append(actor)
         }
     }
@@ -177,9 +175,7 @@ class CgScorePtsManager: CbContainer {
         } else {
             actor = actors.remove(at: 0)
         }
-        actor.set(to: kind, interval: time)
-        actor.position.set(position)
-        actor.start()
+        actor.start(kind: kind, position: position, interval: time)
 
         doings.append(actor)
         self.enabled = true

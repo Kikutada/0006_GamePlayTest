@@ -102,12 +102,9 @@ class CgSpecialTarget : CgActor {
     //  General methods in this class
     // ============================================================
 
-    func setKind(to: EnSpecialTarget) {
-        kindOfSpecialTarget = to
-    }
-    
-    func getKind() -> EnSpecialTarget {
-        return kindOfSpecialTarget
+    func start(kind: EnSpecialTarget) {
+        kindOfSpecialTarget = kind
+        self.start()
     }
 
 }

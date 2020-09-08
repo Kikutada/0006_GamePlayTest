@@ -199,7 +199,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
             case .GhostEated:
                 let pts = context.ghostPts
-                ptsManager.start(kind: pts, position: ghosts.collisionPosition, interval: 62*16)  // 1000ms
+                ptsManager.start(kind: pts, position: ghosts.collisionPosition, interval: 1000) //ms
                 context.ghostPts = pts.get2times()
                 addScore(pts: pts.getScore())
                 player.stop()
@@ -320,8 +320,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
         // Judgment of appearance of special target
         if context.numberOfFeedsEated == context.numberOfFeedsToAppearSpecialTarget {
-            specialTarget.setKind(to: context.kindOfSpecialTarget)
-            specialTarget.start()
+            specialTarget.start(kind: context.kindOfSpecialTarget)
             context.updateSpecialTargetAppeared()
         }
         
@@ -338,7 +337,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         sound.playSE(.EatFruit)
         specialTarget.stop()
 
-        let kind = specialTarget.getKind().getScorePts()
+        let kind = context.kindOfSpecialTarget.getScorePts()
         ptsManager.start(kind: kind, position: specialTarget.position, interval: 2000)  // 2000ms
         addScore(pts: kind.getScore())
     }

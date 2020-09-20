@@ -72,7 +72,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     enum EnGameModelSequence: Int {
         case Init = 0
         case Start, Ready, Go, Updating, ReturnToUpdating, RoundClear, PrepareFlashMaze, FlashMaze,
-             PlayerMissed, PlayerDisappeared, PlayerRestart, GameOver
+             PlayerMiss, PlayerDisappeared, PlayerRestart, GameOver
     }
 
     var player: CgPlayer!
@@ -118,7 +118,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             case .RoundClear: sequenceRoundClear()
             case .PrepareFlashMaze: sequencePrepareFlashMaze()
             case .FlashMaze: sequenceFlashMaze()
-            case .PlayerMissed: sequencePlayerMiss()
+            case .PlayerMiss: sequencePlayerMiss()
             case .PlayerDisappeared: seauencePlayerDisappeared()
             case .PlayerRestart: sequencePlayerRestart()
 
@@ -235,7 +235,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 goToNextSequence(.ReturnToUpdating, after: 1000)
 
             case .PlayerMiss:
-                goToNextSequence(.PlayerMissed)
+                goToNextSequence(.PlayerMiss)
         }
         
         playBGM()

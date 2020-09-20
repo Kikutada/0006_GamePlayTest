@@ -69,12 +69,6 @@ protocol ActorDeligate {
 /// This class has some methods to draw a maze and starting messages.
 class CgSceneMaze: CgSceneFrame, ActorDeligate {
 
-    enum EnGameModelSequence: Int {
-        case Init = 0
-        case Start, Ready, Go, Updating, ReturnToUpdating, RoundClear, PrepareFlashMaze, FlashMaze,
-             PlayerMiss, PlayerDisappeared, PlayerRestart, GameOver
-    }
-
     var player: CgPlayer!
     var blinky: CgGhostBlinky!
     var pinky: CgGhostPinky!
@@ -83,7 +77,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     var ptsManager: CgScorePtsManager!
     var specialTarget: CgSpecialTarget!
     var ghosts = CgGhostManager()
-    var timer_judgeGhostsWavyChase: Int = 0
+    var counter_judgeGhostsWavyChase: Int = 0
 
     convenience init(object: CgSceneFrame) {
         self.init(binding: object, context: object.context, sprite: object.sprite, background: object.background, sound: object.sound)
@@ -100,15 +94,22 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         ghosts.append(inky)
         ghosts.append(clyde)
     }
+    
+    /// States of game model
+    enum EnGameModelState: Int {
+        case Init = 0
+        case Start, Ready, Go, Updating, ReturnToUpdating, RoundClear, PrepareFlashMaze, FlashMaze,
+             PlayerMiss, PlayerDisappeared, PlayerRestart, GameOver
+    }
 
     /// Handle sequence
     /// To override in a derived class.
     /// - Parameter sequence: Sequence number
     /// - Returns: If true, continue the sequence, if not, end the sequence.
     override func handleSequence(sequence: Int) -> Bool {
-        guard let sequenceLabel: EnGameModelSequence = EnGameModelSequence(rawValue: sequence) else { return false }
+        guard let state: EnGameModelState = EnGameModelState(rawValue: sequence) else { return false }
 
-        switch sequenceLabel {
+        switch state {
             case .Init: sequenceInit()
             case .Start: sequenceStart()
             case .Ready: sequenceReady()
@@ -132,7 +133,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     }
 
     // ============================================================
-    //  Do activities in state.
+    //  Execute sequence in each state.
     // ============================================================
     func sequenceInit() {
         drawBackground()
@@ -167,8 +168,8 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         player.start()
         ghosts.start()
         
-        // Wavy attack of ghosts
-        timer_judgeGhostsWavyChase = 0
+        // Reset counter for wavy attack of ghosts
+        counter_judgeGhostsWavyChase = 0
         goToNextSequence()
     }
     
@@ -190,11 +191,11 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 // Wavy Attack of ghosts
                 // - Do not count timer when Pac-Man has power.
                 if !player.timer_playerWithPower.isCounting() {
-                    timer_judgeGhostsWavyChase += SYSTEM_FRAME_TIME
+                    counter_judgeGhostsWavyChase += SYSTEM_FRAME_TIME
                 }
 
                 // Select either Scatter or Chase mode.
-                let chaseMode = context.judgeGhostsWavyChase(time: timer_judgeGhostsWavyChase)
+                let chaseMode = context.judgeGhostsWavyChase(time: counter_judgeGhostsWavyChase)
 
                 if chaseMode {
                     pinky.chase(playerPosition: player.position, playerDirection: player.direction.get())
@@ -324,7 +325,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     // ============================================================
 
     func isSuspendUpdating() -> Bool {
-        return getNextSequence() == EnGameModelSequence.ReturnToUpdating.rawValue
+        return getNextSequence() == EnGameModelState.ReturnToUpdating.rawValue
     }
     
     func playerEatFeed(column: Int, row: Int, power: Bool) {
@@ -340,7 +341,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             addScore(pts: 10)
         }
         
-        // Count eated feeds
+        // Count eaten feeds
         context.numberOfFeedsEated += 1
         context.numberOfFeedsEatedByMiss += 1
 
@@ -449,7 +450,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     //  General methods in this class
     // ============================================================
 
-    func goToNextSequence(_ number: EnGameModelSequence, after time: Int = 0) {
+    func goToNextSequence(_ number: EnGameModelState, after time: Int = 0) {
         goToNextSequence(number.rawValue, after: time)
     }
 

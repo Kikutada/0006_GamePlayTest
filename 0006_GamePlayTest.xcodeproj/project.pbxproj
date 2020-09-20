@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D84417692517BC7E00E7CC99 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D84417682517BC7E00E7CC99 /* README.md */; };
 		D84A822C25005360003653F6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84A822B25005360003653F6 /* AppDelegate.swift */; };
 		D84A823225005360003653F6 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84A823125005360003653F6 /* GameScene.swift */; };
 		D84A823425005360003653F6 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84A823325005360003653F6 /* GameViewController.swift */; };
@@ -44,6 +45,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D84417682517BC7E00E7CC99 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D84A822825005360003653F6 /* 0006_GamePlayTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = 0006_GamePlayTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D84A822B25005360003653F6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D84A823125005360003653F6 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 		D84A821F25005360003653F6 = {
 			isa = PBXGroup;
 			children = (
+				D84417682517BC7E00E7CC99 /* README.md */,
 				D84A822A25005360003653F6 /* 0006_GamePlayTest */,
 				D84A822925005360003653F6 /* Products */,
 			);
@@ -219,6 +222,7 @@
 			files = (
 				D84A823725005360003653F6 /* Main.storyboard in Resources */,
 				D84A825B250053DB003653F6 /* 16_pacman_extrapac_1952ms.wav in Resources */,
+				D84417692517BC7E00E7CC99 /* README.md in Resources */,
 				D84A8255250053DB003653F6 /* 16_BGM_spurt3_592ms.wav in Resources */,
 				D84A825F250053DB003653F6 /* 16_pacman_beginning_4224ms.wav in Resources */,
 				D84A8254250053DB003653F6 /* 16_BGM_spurt4_512ms.wav in Resources */,

@@ -89,7 +89,7 @@ class CgGhostPinky : CgGhost {
     // ============================================================
 
     /// Chase player to enter chase state.
-    /// Aiming for Pacman's third destination
+    /// Aiming for Pacman's third destination (From the mouth)
     /// - Parameters:
     ///   - playerPosition: Player's position
     ///   - playerDirection: Player's direction

@@ -8,6 +8,8 @@
 
 import Foundation
 
+let SYSTEM_FRAME_TIME = 16 //ms
+
 /// Based object class
 class CbObject {
 

@@ -26,7 +26,10 @@ class CgContext {
     var score_extendPlayer: Int = 0
     var score_extendedPlayer: Bool = false
     
+    var elapsedTime: Int = 0
+    
     var numberOfFeeds: Int = 0
+    var playerMiss: Bool = false
     var numberOfFeedsEatedByMiss: Int = 0
     var numberOfFeedsEated: Int = 0
     var numberOfFeedsRemaingToSpurt: Int = 0
@@ -44,12 +47,18 @@ class CgContext {
     }
         
     func resetRound() {
+        playerMiss = false
         numberOfFeedsEatedByMiss = 0
         numberOfFeedsEated = 0
         numberOfFeedsToAppearSpecialTarget = 70
         numberOfFeedsRemaingToSpurt = 20
         resetSpecialTarget()
         resetGhostPts()
+    }
+    
+    func setPlayerMiss() {
+        numberOfFeedsEatedByMiss = 0
+        playerMiss = true
     }
 
     func resetSpecialTarget() {
@@ -74,4 +83,50 @@ class CgContext {
     func updateSpecialTargetAppeared() {
         numberOfFeedsToAppearSpecialTarget += 100
     }
+    
+    func getNumberOfGhostsForAppearace() -> Int {
+        let numberOfGhosts: Int
+        // Miss Bypass Sequence
+        if playerMiss {
+            // Level A
+            if numberOfFeedsEatedByMiss < 7 {
+                numberOfGhosts = 1
+            } else if numberOfFeedsEatedByMiss < 17 {
+                numberOfGhosts = 2
+            } else if numberOfFeedsEatedByMiss < 32 {
+                numberOfGhosts = 3
+            } else {
+                playerMiss = false
+                numberOfGhosts = getNumberOfGhostsForAppearace()
+            }
+        } else {
+            // Level A
+            if numberOfFeedsEated < 30 {
+                numberOfGhosts = 2
+            } else if numberOfFeedsEated < 90 {
+                numberOfGhosts = 3
+            } else {
+                numberOfGhosts = 4
+            }
+        }
+        return numberOfGhosts
+    }
+    
+    func judgeGhostsWavyChase(time: Int) -> Bool {
+        let mode: Bool
+        // Level A
+        if time < 7000 || (time >= 27000 && time < 34000) ||
+           (time >= 54000 && time < 59000) || (time >= 79000 && time < 84000) {
+            mode = false
+        } else {
+            mode = true
+        }
+        return mode
+    }
+    
+    func judgeBlinkySpurt() -> Bool {
+        let feedsRemain: Int = numberOfFeeds - numberOfFeedsEated
+        return (feedsRemain <= numberOfFeedsRemaingToSpurt)
+    }
+
 }

@@ -83,6 +83,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     var ptsManager: CgScorePtsManager!
     var specialTarget: CgSpecialTarget!
     var ghosts = CgGhostManager()
+    var timer_judgeGhostsWavyChase: Int = 0
 
     convenience init(object: CgSceneFrame) {
         self.init(binding: object, context: object.context, sprite: object.sprite, background: object.background, sound: object.sound)
@@ -117,7 +118,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
             case .RoundClear: sequenceRoundClear()
             case .PrepareFlashMaze: sequencePrepareFlashMaze()
             case .FlashMaze: sequenceFlashMaze()
-            case .PlayerMissed: sequencePlayerMissed()
+            case .PlayerMissed: sequencePlayerMiss()
             case .PlayerDisappeared: seauencePlayerDisappeared()
             case .PlayerRestart: sequencePlayerRestart()
 
@@ -165,33 +166,56 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         drawPowerFeed(state: .Blinking)
         player.start()
         ghosts.start()
+        
+        // Wavy attack of ghosts
+        timer_judgeGhostsWavyChase = 0
         goToNextSequence()
     }
     
     func sequenceUpdating() {
         // Player checks to collide ghost.
-        let collisionresult = ghosts.detectCollision(playerPosition: player.position)
+        let collisionResult = ghosts.detectCollision(playerPosition: player.position)
 
-        switch collisionresult {
+        switch collisionResult {
             case .None:
-                // Set the chase state after after the time that the player doesn't eat feed.
+                // When it's no eat time, ghost goes out one by one.
                 if player.timer_playerNotToEat.isEventFired()  {
-                    blinky.chase(playerPosition: player.position)
+                    player.timer_playerNotToEat.restart()
+                    ghosts.setStateToGoOut(numberOfGhosts: 4, forcedOneGhost: true)
+                }
+                
+                // Appearance Timing of Ghosts
+                ghosts.setStateToGoOut(numberOfGhosts: context.getNumberOfGhostsForAppearace(), forcedOneGhost: false)
+
+                // Wavy Attack of ghosts
+                // - Do not count timer when Pac-Man has power.
+                if !player.timer_playerWithPower.isCounting() {
+                    timer_judgeGhostsWavyChase += SYSTEM_FRAME_TIME
+                }
+
+                // Select either Scatter or Chase mode.
+                let chaseMode = context.judgeGhostsWavyChase(time: timer_judgeGhostsWavyChase)
+
+                if chaseMode {
                     pinky.chase(playerPosition: player.position, playerDirection: player.direction.get())
                     inky.chase(playerPosition: player.position, blinkyPosition: blinky.position)
                     clyde.chase(playerPosition: player.position)
-                    ghosts.setStateToGoOut()
 
                 } else {
-                    ghosts.setStateToScatter()
+                    pinky.setStateToScatter()
+                    inky.setStateToScatter()
+                    clyde.setStateToScatter()
                 }
-                
+
                 // If Blinky becomes spurt or not.
-                if isGhostSpurt() {
-                    blinky.state.setSpurt(true)
+                let blinkySpurt: Bool = context.judgeBlinkySpurt() && !ghosts.isGhostInNest()
+                blinky.state.setSpurt(blinkySpurt)
+
+                // Blinky doesn't become scatter mode when he spurts.
+                if blinkySpurt || chaseMode {
                     blinky.chase(playerPosition: player.position)
                 } else {
-                    blinky.state.setSpurt(false)
+                    blinky.setStateToScatter()
                 }
 
                 // For debug
@@ -262,7 +286,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
     
-    func sequencePlayerMissed() {
+    func sequencePlayerMiss() {
         player.stop()
         player.draw(to: .Stop)
         ghosts.stop()
@@ -281,6 +305,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
     func sequencePlayerRestart() {
         specialTarget.stop()
         ptsManager.stop()
+        context.setPlayerMiss()
         context.numberOfPlayers -= 1
 
         if context.numberOfPlayers > 0 {
@@ -317,6 +342,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         
         // Count eated feeds
         context.numberOfFeedsEated += 1
+        context.numberOfFeedsEatedByMiss += 1
 
         // Judgment of appearance of special target
         if context.numberOfFeedsEated == context.numberOfFeedsToAppearSpecialTarget {
@@ -448,11 +474,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
 
-    func isGhostSpurt() -> Bool {
-        let feedsRemain: Int = context.numberOfFeeds - context.numberOfFeedsEated
-        return (feedsRemain <= context.numberOfFeedsRemaingToSpurt) && !ghosts.isGhostInNest()
-    }
-
     func addScore(pts: Int) {
         context.score += pts
         printPlayerScore()
@@ -469,7 +490,6 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
         }
     }
 
-    
     struct StMazePosition {
         var column: Int
         var row: Int

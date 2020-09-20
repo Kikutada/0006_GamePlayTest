@@ -56,12 +56,12 @@ class GameScene: SKScene {
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
     }
-
+    
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered.
 
         // Send update message every 16ms.
-        gameMain.sendEvent(message: .Update, parameter: [16])
+        gameMain.sendEvent(message: .Update, parameter: [SYSTEM_FRAME_TIME])
     }
 
 }

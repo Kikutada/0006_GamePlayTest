@@ -169,6 +169,7 @@ class CgScorePtsManager: CbContainer {
     ///   - time: Time to disappear
     func start(kind: CgScorePts.EnScorePts, position: CgPosition, interval time: Int) {
         let actor: CgScorePts
+
         if actors.count == 0 {
             actor = doings.remove(at: 0)
             actor.stop()
@@ -176,7 +177,6 @@ class CgScorePtsManager: CbContainer {
             actor = actors.remove(at: 0)
         }
         actor.start(kind: kind, position: position, interval: time)
-
         doings.append(actor)
         self.enabled = true
     }

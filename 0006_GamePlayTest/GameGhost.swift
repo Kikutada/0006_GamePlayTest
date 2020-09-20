@@ -94,8 +94,8 @@ class CgGhostPinky : CgGhost {
     ///   - playerPosition: Player's position
     ///   - playerDirection: Player's direction
     func chase(playerPosition: CgPosition, playerDirection: EnDirection) {
-        let dx = playerDirection.getHorizaontalDelta()*3
-        let dy = playerDirection.getVerticalDelta()*3
+        let dx = playerDirection.getHorizaontalDelta()*4
+        let dy = playerDirection.getVerticalDelta()*4
         let newTargetPosition = CgPosition(column: playerPosition.column+dx, row: playerPosition.row+dy)
         super.setStateToChase(targetPosition: newTargetPosition)
     }
@@ -298,18 +298,18 @@ class CgGhostManager {
         }
     }
 
-    func setStateToScatter() {
+    func setStateToGoOut(numberOfGhosts: Int, forcedOneGhost: Bool) {
+        var count: Int = 0
         for ghost in allGhosts {
-            ghost.setStateToScatter()
+            if ghost.state.get() == .Standby {
+                ghost.setStateToGoOut()
+                if forcedOneGhost { break }
+            }
+            count += 1
+            if numberOfGhosts == count { break }
         }
     }
-
-    func setStateToGoOut() {
-        for ghost in allGhosts {
-            ghost.setStateToGoOut()
-        }
-    }
-
+    
     func isFrightenedState() -> Bool {
         var frightenedState: Bool = false
         for ghost in allGhosts {

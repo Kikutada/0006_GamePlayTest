@@ -222,7 +222,7 @@ class CgSceneMaze: CgSceneFrame, ActorDeligate {
                 // For debug
                 ghosts.drawTargetPosition(show: true)
 
-            case .GhostEated:
+            case .PlayerEatsGhost:
                 let pts = context.ghostPts
                 ptsManager.start(kind: pts, position: ghosts.collisionPosition, interval: 1000) //ms
                 context.ghostPts = pts.get2times()

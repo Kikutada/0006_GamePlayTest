@@ -15,5 +15,5 @@ This project is under construction.
 
 # License
 
-"Game Play Test" is under [MIT license](https://en.wikipedia.org/wiki/MIT_License).
+"GamePlayTest" is under [MIT license](https://en.wikipedia.org/wiki/MIT_License).
 

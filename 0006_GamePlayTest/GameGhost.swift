@@ -333,7 +333,7 @@ class CgGhostManager {
     }
     
     enum EnCollisionResult {
-        case None, GhostEated, PlayerMiss
+        case None, PlayerEatsGhost, PlayerMiss
     }
     
     func detectCollision(playerPosition: CgPosition) -> EnCollisionResult {
@@ -345,7 +345,7 @@ class CgGhostManager {
                     ghost.setStateToEscape()                    
                     ghost.clear()
                     collisionPosition = ghost.position
-                    collisionResult = .GhostEated
+                    collisionResult = .PlayerEatsGhost
                 } else if !ghost.state.isEscaping()  {
                     collisionResult = .PlayerMiss
                 }
